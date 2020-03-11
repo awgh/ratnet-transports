@@ -1,0 +1,1 @@
+All ratnet-transports code is Copyright 2020 by the original authors.
