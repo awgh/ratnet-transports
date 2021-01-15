@@ -8,6 +8,7 @@ import (
 
 	"github.com/awgh/bencrypt/bc"
 	"github.com/awgh/bencrypt/ecc"
+	"github.com/awgh/ratnet/api"
 	"github.com/awgh/ratnet/nodes/ram"
 )
 
@@ -38,7 +39,7 @@ func main() {
 	i := 0
 	for { //+fmt.Sprintf("%d", i)
 
-		p1, err := serverTransport.RPC("127.0.0.1:53351", "CID")
+		p1, err := serverTransport.RPC("127.0.0.1:53351", api.CID)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -46,7 +47,7 @@ func main() {
 		r1 := p1.(bc.PubKey)
 		log.Printf("CID cast to PubKey: %+v -> %s\n", r1, r1.ToB64())
 
-		result, err := clientTransport.RPC("127.0.0.1:53350", "AddContact", "destname1", r1.ToB64()) // "FNORD"+fmt.Sprintf("%d", i))
+		result, err := clientTransport.RPC("127.0.0.1:53350", api.AddContact, "destname1", r1.ToB64()) // "FNORD"+fmt.Sprintf("%d", i))
 		if err != nil {
 			log.Fatal(err)
 		} else {

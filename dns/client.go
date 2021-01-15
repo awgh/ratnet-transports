@@ -16,9 +16,9 @@ import (
 //
 
 // RPC : transmit data via DNS
-func (m *Module) RPC(host string, method string, args ...interface{}) (interface{}, error) {
+func (m *Module) RPC(host string, method api.Action, args ...interface{}) (interface{}, error) {
 
-	log.Printf("\n***\n***RPC %s called: %s  client:%x (%p)  server:%x (%p)\n***\n", method, host, m.ClientConv, m.kcpClient, m.ServerConv, m.kcpServer)
+	log.Printf("\n***\n***RPC %d called: %s  client:%x (%p)  server:%x (%p)\n***\n", method, host, m.ClientConv, m.kcpClient, m.ServerConv, m.kcpServer)
 	//log.Println(args)
 
 	// send, then start to avoid sending spurious empty MX requests

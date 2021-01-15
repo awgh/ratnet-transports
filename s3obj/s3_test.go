@@ -56,9 +56,9 @@ func Test_single_node(t *testing.T) {
 	t.Log("pollServer Pickup Local result len: ", len(toRemote.Data))
 	t.Logf("%+v\n", toRemote)
 
-	_, err = transport.RPC("hoststring", "Dropoff", toRemote)
+	_, err = transport.RPC("hoststring", api.Dropoff, toRemote)
 
-	bundle, err := transport.RPC("hoststring", "Pickup", toRemote, int64(-1))
+	bundle, err := transport.RPC("hoststring", api.Pickup, toRemote, int64(-1))
 
 	if err != nil {
 		t.Error(node, "remote pickup error: "+err.Error())

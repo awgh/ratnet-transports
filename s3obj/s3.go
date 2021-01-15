@@ -230,13 +230,13 @@ func (s3obj *Module) setCounter() (int64, error) {
 }
 
 // RPC : client interface
-func (s3obj *Module) RPC(host string, method string, args ...interface{}) (interface{}, error) {
+func (s3obj *Module) RPC(host string, method api.Action, args ...interface{}) (interface{}, error) {
 
-	events.Info(s3obj.node, fmt.Sprintf("\n***\n***RPC %s on %s called with: %+v\n***\n", method, host, args))
+	events.Info(s3obj.node, fmt.Sprintf("\n***\n***RPC %d on %s called with: %+v\n***\n", method, host, args))
 
 	switch method {
 
-	case "Pickup":
+	case api.Pickup:
 
 		if args == nil || len(args) < 2 {
 			return nil, errors.New("failed due to arg length in Pickup for s3obj")
@@ -291,7 +291,7 @@ func (s3obj *Module) RPC(host string, method string, args ...interface{}) (inter
 		rr.Value = bundle
 		return rr.Value, nil
 
-	case "Dropoff":
+	case api.Dropoff:
 
 		if args == nil || len(args) < 1 {
 			return nil, errors.New("failed due to arg length in Dropoff for s3obj")
@@ -322,7 +322,7 @@ func (s3obj *Module) RPC(host string, method string, args ...interface{}) (inter
 
 		return nil, err
 
-	case "ID":
+	case api.ID:
 		return s3obj.RoutingPubKey, nil
 	}
 	return nil, errors.New("Not Implemented")
