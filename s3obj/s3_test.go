@@ -12,31 +12,38 @@ import (
 	"github.com/awgh/ratnet/api"
 	"github.com/awgh/ratnet/api/events/defaultlogger"
 	"github.com/awgh/ratnet/nodes/ram"
-	"github.com/awgh/ratnet/policy"
+	"github.com/awgh/ratnet/policy/poll"
 )
 
 // ECC Test Keys
-var pubprivkeyb64Ecc = "<Add a priv key>"
-var pubkeyb64Ecc = "<Add a pub key>"
+var (
+	pubprivkeyb64Ecc = "<Add a priv key>"
+	pubkeyb64Ecc     = "<Add a pub key>"
+)
 
 // Access keys for S3
-var accessKey = "<Add AWS API Access Key>"
-var secretKey = "<Add AWS API Secret Key>"
+var (
+	accessKey = "<Add AWS API Access Key>"
+	secretKey = "<Add AWS API Secret Key>"
+)
 
 // Namespace settings
-var namespace = "<Add your namespace>"
-var region = "<Add your region>"
+var (
+	namespace = "<Add your namespace>"
+	region    = "<Add your region>"
+)
 
 // AWS S3 API Endpoint. This is different for each cloud provider, and is default to Oraclecloud for testing.
 var endPoint = fmt.Sprintf("%s.compat.objectstorage.%s.oraclecloud.com", namespace, region)
 
 // What buckets to use for c2 and the monotonic timer.
 // These must be separate, and empty, buckets at the time of testing and using of the S3 transport
-var c2bucket = "awgh"
-var timebucket = "awgh-time"
+var (
+	c2bucket   = "awgh"
+	timebucket = "awgh-time"
+)
 
 func Test_single_node(t *testing.T) {
-
 	// make content key for the luggage tag
 	keypair := new(ecc.KeyPair)
 	_ = keypair.FromB64(pubprivkeyb64Ecc)
@@ -59,7 +66,6 @@ func Test_single_node(t *testing.T) {
 	_, err = transport.RPC("hoststring", api.Dropoff, toRemote)
 
 	bundle, err := transport.RPC("hoststring", api.Pickup, toRemote, int64(-1))
-
 	if err != nil {
 		t.Error(node, "remote pickup error: "+err.Error())
 	}
@@ -72,7 +78,7 @@ func Test_single_node(t *testing.T) {
 		}
 	}
 
-	node.SetPolicy(policy.NewPoll(transport, node, 500, 100))
+	node.SetPolicy(poll.New(transport, node, 500, 100))
 
 	go func() {
 		for {
@@ -87,7 +93,6 @@ func Test_single_node(t *testing.T) {
 }
 
 func Test_two_nodes_end_to_end(t *testing.T) {
-
 	keypair := new(ecc.KeyPair)
 	_ = keypair.FromB64(pubprivkeyb64Ecc)
 	node1 := ram.New(nil, keypair)
@@ -99,8 +104,8 @@ func Test_two_nodes_end_to_end(t *testing.T) {
 	transport1 := New(namespace, region, node1, accessKey, secretKey, pubkeyb64Ecc, endPoint, c2bucket, timebucket)
 	transport2 := New(namespace, region, node1, accessKey, secretKey, pubkeyb64Ecc, endPoint, c2bucket, timebucket)
 
-	node1.SetPolicy(policy.NewPoll(transport1, node1, 5, 100))
-	node2.SetPolicy(policy.NewPoll(transport2, node2, 5, 100))
+	node1.SetPolicy(poll.New(transport1, node1, 5, 100))
+	node2.SetPolicy(poll.New(transport2, node2, 5, 100))
 
 	err := node1.Start()
 	if err != nil {
@@ -174,7 +179,6 @@ func Test_two_nodes_end_to_end(t *testing.T) {
 }
 
 func Test_three_nodes_end_to_end(t *testing.T) {
-
 	keypair := new(ecc.KeyPair)
 	_ = keypair.FromB64(pubprivkeyb64Ecc)
 	node1 := ram.New(nil, keypair)
@@ -188,9 +192,9 @@ func Test_three_nodes_end_to_end(t *testing.T) {
 	transport2 := New(namespace, region, node2, accessKey, secretKey, pubkeyb64Ecc, endPoint, c2bucket, timebucket)
 	transport3 := New(namespace, region, node3, accessKey, secretKey, pubkeyb64Ecc, endPoint, c2bucket, timebucket)
 
-	node1.SetPolicy(policy.NewPoll(transport1, node1, 5, 100))
-	node2.SetPolicy(policy.NewPoll(transport2, node2, 5, 100))
-	node3.SetPolicy(policy.NewPoll(transport3, node3, 5, 100))
+	node1.SetPolicy(poll.New(transport1, node1, 5, 100))
+	node2.SetPolicy(poll.New(transport2, node2, 5, 100))
+	node3.SetPolicy(poll.New(transport3, node3, 5, 100))
 
 	err := node1.Start()
 	if err != nil {
