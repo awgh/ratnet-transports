@@ -26,6 +26,7 @@ func (m *Module) RPC(host string, method api.Action, args ...interface{}) (inter
 	// Send, then start to avoid sending spurious empty MX requests
 	if !m.IsRunningClient() {
 		m.UpstreamStr = host
+		m.initClient()
 		m.startClient()
 	}
 

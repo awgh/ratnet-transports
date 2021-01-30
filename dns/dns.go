@@ -39,6 +39,7 @@ type Module struct {
 	server               *mdns.Server
 	wgClient             sync.WaitGroup
 	wgServer             sync.WaitGroup
+	clientsByHost        map[string]*kcp.KCP
 
 	debouncerClientUpdate *debouncer.Debouncer
 	debouncerServerUpdate *debouncer.Debouncer
@@ -97,21 +98,8 @@ func New(node api.Node, clientConv uint32, serverConv uint32) *Module {
 	instance.downstreamKCPData = make(chan []byte, 200)
 
 	// Client is for client connections (from me) and server responses (from remote)
-	instance.kcpClient = kcp.NewKCP(instance.ClientConv,
-		func(buf []byte, size int) {
-			if size > 0 {
-				b := make([]byte, size)
-				copy(b, buf[:size])
-				instance.upstreamKCPData <- b
-
-			}
-		})
-	instance.kcpClient.SetMtu(MTU) // ((5/8) * 253) -8
-
-	// instance.kcpClient.NoDelay(1, 20, 2, 1)
-	instance.kcpClient.NoDelay(0, 20, 0, 1)
-
 	// Server is for server connections (from remote) and my responses (from me)
+	instance.clientsByHost = make(map[string]*kcp.KCP)
 
 	instance.byteLimit = 2410
 
@@ -179,9 +167,9 @@ func (m *Module) serve(net, addr string, adminMode bool) {
 	// m.kcpServer.NoDelay(1, 20, 2, 1)
 	m.kcpServer.NoDelay(0, 20, 0, 1)
 
+	m.wgServer.Add(1)
 	m.setIsRunningServer(true)
 
-	m.wgServer.Add(1)
 	go func() {
 		defer m.wgServer.Done()
 
@@ -207,6 +195,40 @@ func (m *Module) serve(net, addr string, adminMode bool) {
 	err := m.server.ListenAndServe()
 	if err != nil {
 		log.Fatalf("Failed to setup the %s server: %v\n", net, err)
+	}
+}
+
+func (m *Module) initClient() {
+	if m.UpstreamStr == "" {
+		log.Fatal("Upstream not set")
+	}
+
+	if !m.IsRunningClient() {
+
+		client, ok := m.clientsByHost[m.UpstreamStr]
+
+		if !ok {
+			kcpClient := kcp.NewKCP(m.ClientConv,
+				func(buf []byte, size int) {
+					if size > 0 {
+						b := make([]byte, size)
+						copy(b, buf[:size])
+						m.upstreamKCPData <- b
+
+					}
+				})
+			kcpClient.SetMtu(MTU) // ((5/8) * 253) -8
+			// instance.kcpClient.NoDelay(1, 20, 2, 1)
+			kcpClient.NoDelay(0, 20, 0, 1)
+			m.clientMutex.Lock()
+			m.kcpClient = kcpClient
+			m.clientMutex.Unlock()
+			m.clientsByHost[m.UpstreamStr] = kcpClient
+		} else {
+			m.clientMutex.Lock()
+			m.kcpClient = client
+			m.clientMutex.Unlock()
+		}
 	}
 }
 
