@@ -2,18 +2,20 @@ package main
 
 import (
 	"log"
-	"time"
 
 	transport "github.com/awgh/ratnet-transports/dns"
 
 	"github.com/awgh/bencrypt/bc"
 	"github.com/awgh/bencrypt/ecc"
 	"github.com/awgh/ratnet/api"
+	"github.com/awgh/ratnet/api/events/defaultlogger"
 	"github.com/awgh/ratnet/nodes/ram"
+
+	"github.com/pkg/profile"
 )
 
 func main() {
-
+	defer profile.Start().Stop()
 	a := new(ecc.KeyPair)
 	b := new(ecc.KeyPair)
 	c := new(ecc.KeyPair)
@@ -25,9 +27,12 @@ func main() {
 	nodeClient := ram.New(a, b)
 	nodeServer := ram.New(c, d)
 
+	defaultlogger.StartDefaultLogger(nodeClient, api.Info)
+	defaultlogger.StartDefaultLogger(nodeServer, api.Info)
+
 	clientTransport := transport.New(nodeClient, 0x11223344, 0x55667788)
 
-	serverTransport := transport.New(nodeServer, 0x55667788, 0x11223344) //0x55667788
+	serverTransport := transport.New(nodeServer, 0x55667788, 0x11223344) // 0x55667788
 
 	go serverTransport.Listen(":53350", true)
 
@@ -35,7 +40,7 @@ func main() {
 	go clientTransport.Listen(":53351", true)
 	//
 
-	//go func() {
+	// go func() {
 	i := 0
 	for { //+fmt.Sprintf("%d", i)
 
@@ -52,9 +57,9 @@ func main() {
 			log.Fatal(err)
 		} else {
 			log.Printf("received: %v\n", result)
-			//serverTransport.Stop()
-			//clientTransport.Stop()
-			//return
+			// serverTransport.Stop()
+			// clientTransport.Stop()
+			// return
 		}
 		/*
 			result, err = serverTransport.RPC("127.0.0.1:53351", "CID")
@@ -65,8 +70,8 @@ func main() {
 			}
 		*/
 		i++
-		//break
-		time.Sleep(5000 * time.Millisecond)
+		// break
+		// time.Sleep(3000 * time.Millisecond)
 	}
 	//}()
 }
