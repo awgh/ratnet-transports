@@ -23,7 +23,6 @@ var (
 func (m *Module) RPC(host string, method api.Action, args ...interface{}) (interface{}, error) {
 	events.Info(m.node, fmt.Sprintf("\n***\n***RPC %d called: %s  client:%x server:%x\n***\n", method, host, m.ClientConv, m.ServerConv))
 
-	// Send, then start to avoid sending spurious empty MX requests
 	if !m.IsRunningClient() {
 		m.UpstreamStr = host
 		m.initClient()
@@ -45,14 +44,8 @@ func (m *Module) RPC(host string, method api.Action, args ...interface{}) (inter
 	}
 
 	m.clientMutex.Lock()
-	if n := m.kcpClient.Send(*buffer); n >= 0 {
-		// clientMetrics.SentBytes(len(*buffer))
-		// clientMetrics.Print()
-	} else {
-		return nil, errors.New("kcpClient Send failed")
-	}
+	m.kcpClient.Send(*buffer)
 	m.clientMutex.Unlock()
-	// clientMetrics.SentMsgs()
 
 	var rr api.RemoteResponse
 	rr = <-m.respchan
