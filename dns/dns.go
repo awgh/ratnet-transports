@@ -191,7 +191,9 @@ func (m *Module) serve(net, addr string, adminMode bool) {
 		m.handleDNS(w, req)
 	})
 
+	m.serverMutex.Lock()
 	m.server = &mdns.Server{Addr: addr, Net: net, TsigSecret: nil, Handler: serveMux}
+	m.serverMutex.Unlock()
 	err := m.server.ListenAndServe()
 	if err != nil {
 		log.Fatalf("Failed to setup the %s server: %v\n", net, err)
@@ -272,14 +274,14 @@ func (m *Module) stopClient() {
 		events.Info(m.node, "Stopping Client")
 		m.setIsRunningClient(false)
 		m.wgClient.Wait()
-		/*
-			for m.feedUpstream(false) { // these are the ACKs, they need to go out
-				time.Sleep(20 * time.Millisecond)
-				m.clientMutex.Lock()
-				m.kcpClient.Update()
-				m.clientMutex.Unlock()
-			}
-		*/
+
+		for m.feedUpstream(false) { // these are the ACKs, they need to go out
+			time.Sleep(20 * time.Millisecond)
+			m.clientMutex.Lock()
+			m.kcpClient.Update()
+			m.clientMutex.Unlock()
+		}
+
 		m.UpstreamStr = ""
 		events.Info(m.node, "Client Stopped")
 	}

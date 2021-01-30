@@ -15,7 +15,6 @@ import (
 
 // WriteUpstream - Writes KCP data in DNS Request form to the channel headed outbound from the client
 func (m *Module) WriteUpstream(buf []byte, size int) {
-	// clientMetrics.RawBytesOut(size)
 	b := make([]byte, size)
 	copy(b, buf[:size])
 	m.upstreamKCPData <- b
@@ -41,8 +40,6 @@ func (m *Module) feedUpstream(sendEmpty bool) bool {
 		req.SetQuestion("mail.", mdns.TypeMX) // send no data, just get response
 	}
 
-	// events.Info(m.node, "feedUpstream called on Node:", m.node, buf, len(buf))
-
 	req.RecursionDesired = true
 	// req.Compress = true
 
@@ -62,7 +59,7 @@ func (m *Module) feedUpstream(sendEmpty bool) bool {
 			m.clientMutex.Unlock()
 		}
 	} else {
-		events.Warning(m.node, "DNS exchange failed in feedUpstream, stopping client: ", err.Error())
+		events.Warning(m.node, "DNS exchange failed in feedUpstream: ", m.UpstreamStr, err.Error())
 		// m.stopClient()
 	}
 
@@ -76,10 +73,8 @@ func (m *Module) clientUpdate() {
 	m.clientMutex.Lock()
 	n := m.kcpClient.Recv(buffer)
 	m.clientMutex.Unlock()
-	// events.Info(m.node, "kcpClient.Recv read: ", n)
 
 	if n > 0 {
-		// events.Info(m.node, "kcpClient.Recv got raw: ", buffer[:n], string(buffer[:n]), len(buffer[:n]))
 
 		b := buffer[:n]
 		rr, err := api.RemoteResponseFromBytes(&b)

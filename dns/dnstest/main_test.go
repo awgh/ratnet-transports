@@ -53,7 +53,7 @@ var (
 
 func init() {
 	TransportTypes = []TransportType{DNS}
-	NodeTypes = []NodeType{RAM} //, FS, QL} //, DB}
+	NodeTypes = []NodeType{RAM, FS, QL} //, DB}
 }
 
 // Get preferred outbound ip of this machine

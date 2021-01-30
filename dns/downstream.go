@@ -69,28 +69,29 @@ func (m *Module) handleDNS(w mdns.ResponseWriter, req *mdns.Msg) {
 	case <-time.After(ServerTimeout): // nothing's ready to go, send empty response
 		// no answer, nothing to send
 	}
-
-	ok := true
-	// opportunistically grab up to 2 more
-	for i := 0; ok && i < 2; i++ { // ten is max number of answers
-		select {
-		case item = <-m.downstreamKCPData:
-			ok = true
-			itemCount++
-			// base32 encode, then dotify / "DNS chop"
-			b32s, err := Dotify(item)
-			if err != nil {
-				events.Error(m.node, err)
-				return
+	/*
+		ok := true
+		// opportunistically grab up to 1 more
+		for i := 0; ok && i < 1; i++ { // ten is max number of answers
+			select {
+			case item = <-m.downstreamKCPData:
+				ok = true
+				itemCount++
+				// base32 encode, then dotify / "DNS chop"
+				b32s, err := Dotify(item)
+				if err != nil {
+					events.Error(m.node, err)
+					return
+				}
+				rr := new(mdns.A)
+				rr.Hdr = mdns.RR_Header{Name: b32s, Rrtype: mdns.TypeA, Class: mdns.ClassINET, Ttl: 0}
+				rr.A = net.ParseIP("192.168.1.1") // todo: this should be data
+				answers = append(answers, rr)
+			default:
+				ok = false
 			}
-			rr := new(mdns.A)
-			rr.Hdr = mdns.RR_Header{Name: b32s, Rrtype: mdns.TypeA, Class: mdns.ClassINET, Ttl: 0}
-			rr.A = net.ParseIP("192.168.1.1") // todo: this should be data
-			answers = append(answers, rr)
-		default:
-			ok = false
 		}
-	}
+	*/
 	msg.Answer = answers
 
 	events.Info(m.node, "handleDNS Server packed answers:", len(answers))
