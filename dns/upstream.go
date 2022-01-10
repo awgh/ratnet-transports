@@ -43,7 +43,7 @@ func (m *Module) feedUpstream(sendEmpty bool) bool {
 	req.RecursionDesired = true
 	// req.Compress = true
 
-	dnsClient := &mdns.Client{Net: "udp", ReadTimeout: ClientTimeout, WriteTimeout: ClientTimeout, SingleInflight: true}
+	dnsClient := &mdns.Client{Net: "udp", ReadTimeout: clientTimeout, WriteTimeout: clientTimeout, SingleInflight: true}
 	r, _, err := dnsClient.Exchange(req, m.UpstreamStr)
 	if err == nil {
 		for _, value := range r.Answer {
@@ -60,7 +60,6 @@ func (m *Module) feedUpstream(sendEmpty bool) bool {
 		}
 	} else {
 		events.Warning(m.node, "DNS exchange failed in feedUpstream: ", m.UpstreamStr, err.Error())
-		// m.stopClient()
 	}
 
 	m.debouncerClientUpdate.Trigger()
@@ -69,7 +68,7 @@ func (m *Module) feedUpstream(sendEmpty bool) bool {
 
 // pulls from kcpClient (user data received) and pushes to client responses channel
 func (m *Module) clientUpdate() {
-	buffer := make([]byte, MaxMsgSize)
+	buffer := make([]byte, maxMsgSize)
 	m.clientMutex.Lock()
 	n := m.kcpClient.Recv(buffer)
 	m.clientMutex.Unlock()

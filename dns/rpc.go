@@ -3,16 +3,9 @@ package dns
 import (
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/awgh/ratnet/api"
 	"github.com/awgh/ratnet/api/events"
-)
-
-var (
-	RPCTimeout    = 30 * time.Second
-	ClientTimeout = 4 * time.Second
-	ServerTimeout = 3 * time.Second
 )
 
 //
@@ -35,9 +28,6 @@ func (m *Module) RPC(host string, method api.Action, args ...interface{}) (inter
 
 	// Note: Chunking happens at the node.Send level, inside ratnet, otherwise Pickup won't work
 
-	// use serializer, (todo: then zlib), then base32, then dotify...
-	// w := zlib.NewWriter(&buffer)
-
 	buffer := api.RemoteCallToBytes(&a)
 	if len(*buffer) > 2889 { // lkg: 2889 bytes here
 		events.Warning(m.node, "dns trying to send large buffer: ", len(*buffer))
@@ -47,16 +37,7 @@ func (m *Module) RPC(host string, method api.Action, args ...interface{}) (inter
 	m.kcpClient.Send(*buffer)
 	m.clientMutex.Unlock()
 
-	var rr api.RemoteResponse
-	rr = <-m.respchan
-	/*
-		select {
-		case rr = <-m.respchan:
-			break
-		case <-time.After(RPCTimeout):
-			return nil, errors.New("RPC Timed Out")
-		}
-	*/
+	rr := <-m.respchan
 
 	events.Info(m.node, fmt.Sprintf("\n***\n***RPC %d returned Error: %s, Value: %+v\n***\n", method, rr.Error, rr.Value))
 
